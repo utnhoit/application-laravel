@@ -1,0 +1,83 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "volumes": [
+    {
+      "name": "app",
+      "host": {
+        "sourcePath": "/lavarel"
+      }
+    },
+    {
+      "name": "nginx-proxy-conf",
+      "host": {
+        "sourcePath": "/lavarel/server_env/proxy/conf.d"
+      }
+    },
+    {
+      "name": "deploykeys",
+      "host": {
+        "sourcePath": "server_env/deploykeys"
+      }
+    },
+  ],
+  "containerDefinitions": [
+    {
+      "name": "nginx-proxy",
+      "image": "nginx",
+      "essential": false,
+      "memory": 256,
+      "links": [
+        "php-app"
+      ],
+      "portMappings": [
+        {
+          "hostPort": 80,
+          "containerPort": 80
+        }
+      ],
+      "environment": [
+        {
+          "name": "NGINX_PORT",
+          "value": "80"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "php-app",
+          "containerPath": "/src"
+        },
+        {
+          "sourceVolume": "awseb-logs-nginx-proxy",
+          "containerPath": "/var/log/nginx"
+        },
+        {
+          "sourceVolume": "nginx-proxy-conf",
+          "containerPath": "/etc/nginx/conf.d",
+          "readOnly": true
+        }
+      ]
+    },
+    {
+      "name": "app",
+      "image": "peec/laravel-docker-aws",
+      "essential": true,
+      "memory": 512,
+      "environment": [
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "app",
+          "containerPath": "/src"
+        },
+        {
+          "sourceVolume": "deploykeys",
+          "containerPath": "/root/.ssh"
+        },
+        {
+          "sourceVolume": "awseb-logs-app",
+          "containerPath": "/src/storage/logs"
+        }
+      ]
+    }
+  ]
+}
